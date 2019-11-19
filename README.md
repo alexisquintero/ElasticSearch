@@ -163,19 +163,20 @@ curl -X GET "localhost:9200/'index'/_search?pretty" -H 'Content-Type: applicatio
 
 ```
 
-#### "query" -> actual query
-#### "from" -> starting field
-#### "size" -> amount of items
-#### "sort" -> sorting
+#### "query"   -> actual query
+#### "from"    -> starting field
+#### "size"    -> amount of items
+#### "sort"    -> sorting
 #### "_source" -> similar to SELECT from SQL, filters the returned items
 
 ## [Searches](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/_executing_searches.html)
-## [Match query](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-dsl-match-query.html): search done against specific fields
+## [Match query](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-dsl-match-query.html): search done
+ against specific fields
 ### Returns account numbered 20
 
 ```
 
-curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/json' -d'
+curl -X GET "localhost:9200/'index'/_search?pretty" -H 'Content-Type: application/json' -d'
 {
   "query": { "match": { "account_number": 20 } }
 }'
@@ -186,7 +187,7 @@ curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/j
 
 ```
 
-curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/json' -d'
+curl -X GET "localhost:9200/'index'/_search?pretty" -H 'Content-Type: application/json' -d'
 {
   "query": { "match": { "address": "mill lane" } }
 }'
@@ -197,7 +198,7 @@ curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/j
 
 ```
 
-curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/json' -d'
+curl -X GET "localhost:9200/'index'/_search?pretty" -H 'Content-Type: application/json' -d'
 {
   "query": { "match_phrase": { "address": "mill lane" } }
 }'
@@ -209,7 +210,7 @@ curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/j
 
 ```
 
-curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/json' -d'
+curl -X GET "localhost:9200/'index'/_search?pretty" -H 'Content-Type: application/json' -d'
 {
   "query": {
     "bool": {
@@ -227,7 +228,7 @@ curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/j
 
 ```
 
-curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/json' -d'
+curl -X GET "localhost:9200/'index'/_search?pretty" -H 'Content-Type: application/json' -d'
 {
   "query": {
     "bool": {
@@ -245,7 +246,7 @@ curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/j
 
 ```
 
-curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/json' -d'
+curl -X GET "localhost:9200/'index'/_search?pretty" -H 'Content-Type: application/json' -d'
 {
   "query": {
     "bool": {
@@ -258,3 +259,117 @@ curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/j
 }'
 
 ```
+
+## [Score](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/_executing_filters.html): indicates how relevant
+ the document is, it's not always produced
+### Return all accounts with balances between 20000 and 30000, inclusive.
+#### "range" -> filters by range
+
+```
+curl -X GET "localhost:9200/'index'/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+  "query": {
+    "bool": {
+      "must": { "match_all": {} },
+      "filter": {
+        "range": {
+          "balance": {
+            "gte": 20000,
+            "lte": 30000
+          }
+        }
+      }
+    }
+  }
+}'
+
+```
+
+## [Aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/_executing_aggregations.html): group and
+ extract statistics from the data. Similar to GROUP BY in SQL
+
+```
+
+curl -X GET "localhost:9200/'index'/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+  "size": 0,
+  "aggs": {
+    "group_by_state": {
+      "terms": {
+        "field": "state.keyword"
+      }
+    }
+  }
+}'
+
+```
+
+## [Query and filter](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-filter-context.html)
+### The behaviour of a query clause depends on whether it is used in\
+### - Query: "How well does this document match this query?"
+### - Filter: "Does this document match this query? Yes or No"
+
+## [Match all](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-dsl-match-all-query.html)
+### Matches all documents, giving them all a score of 1.0
+### The _score can be changed with the boost parameter
+
+```
+
+curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "match_all": { "boost" : 1.2 }
+    }
+}'
+
+```
+
+### Matches no documents
+
+```
+
+curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "match_none": {}
+    }
+}'
+
+```
+
+## [Full text queries](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/full-text-queries.html)
+### Used for running full text queries on full text fields like the body of an email.
+
+## [Match query](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-dsl-match-query.html)
+### 
+
+```
+
+curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "match" : {
+            "message" : {
+                "query" : "to be or not to be",
+                "operator" : "and",
+                "zero_terms_query": "all",
+                "cutoff_frequency" : 0.001
+            }
+        }
+    }
+}'
+
+```
+
+#### "operator"         -> "and"|"or", default "or"
+#### "zero_terms_query" -> "all|none", default "none"
+#### "cutoff_frequency" -> [0..1), high frequency terms are moved into an optional subquery. Operates on a per-shard-level
+
+## [Match phrase](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-dsl-match-query-phrase.html)
+### TODO
+
+## [Match phrase prefix](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-dsl-match-query-phrase-prefix.html)
+### TODO
+
+## [Multi match](https://www.elastic.co/guide/en/elasticsearch/reference/6.2/query-dsl-multi-match-query.html)
+### TODO
